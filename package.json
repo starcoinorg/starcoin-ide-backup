@@ -97,6 +97,7 @@
 					"type": "string",
 					"enum": [
 						"libra",
+						"starcoin",
 						"dfinance"
 					],
 					"default": "libra",
@@ -127,6 +128,11 @@
 					"type": "string",
 					"default": "",
 					"description": "Custom path to Move Executor binary"
+				},
+				"move.moveCompilerPath": {
+					"type": "string",
+					"default": "",
+					"description": "Custom path to Move Compiler binary"					
 				}
 			}
 		}

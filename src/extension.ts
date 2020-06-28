@@ -4,26 +4,27 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
+import { send } from 'process';
 
-let extensionPath : string;
+let extensionPath: string;
 
 const workspace = vscode.workspace;
 const workspaceClients: Map<vscode.WorkspaceFolder, lsp.LanguageClient> = new Map();
 
 interface AppConfig {
-	modulesPath: string|null,
-	stdlibPath: string|null,
+	modulesPath: string | null,
+	stdlibPath: string | null,
 	compilerDir: string,
 	network: string,
-	sender: string|undefined|null,
+	sender: string | undefined | null,
 	showModal: boolean
 }
 
 interface MlsConfig {
 	dialect: string,
 	modules_folders: string[],
-	stdlib_folder: string|undefined|null,
-	sender_address: string|undefined|null
+	stdlib_folder: string | undefined | null,
+	sender_address: string | undefined | null
 }
 
 /**
@@ -32,8 +33,8 @@ interface MlsConfig {
  */
 export async function activate(context: vscode.ExtensionContext) {
 
-    context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
-    context.subscriptions.push(vscode.commands.registerCommand('move.run', () => runScriptCommand().catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerCommand('move.run', () => runScriptCommand().catch(console.error)));
 
 	extensionPath = context.extensionPath;
 	const outputChannel = vscode.window.createOutputChannel('move-language-server');
@@ -53,15 +54,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const executable = (process.platform === 'win32') ? 'move-ls.exe' : 'move-ls';
 		const cfgBinPath = workspace.getConfiguration('move', document.uri).get<string>('languageServerPath');
-		let binaryPath   = cfgBinPath || path.join(extensionPath, 'bin', executable);
+		let binaryPath = cfgBinPath || path.join(extensionPath, 'bin', executable);
 
-		const lspExecutable : lsp.Executable = {
+		const lspExecutable: lsp.Executable = {
 			command: binaryPath,
 			options: { env: { RUST_LOG: 'info' } },
 		};
 
-		const serverOptions : lsp.ServerOptions = {
-			run:   lspExecutable,
+		const serverOptions: lsp.ServerOptions = {
+			run: lspExecutable,
 			debug: lspExecutable,
 		};
 
@@ -75,7 +76,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		const client = new lsp.LanguageClient('move-language-server', 'Move Language Server', serverOptions, clientOptions);
 
-	  client.start();
+		client.start();
 
 		workspaceClients.set(folder, client);
 	}
@@ -100,7 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const config = workspace.getConfiguration('move', document.uri);
-		const file   = config.get<string>('configPath') || '.mvconfig.json';
+		const file = config.get<string>('configPath') || '.mvconfig.json';
 
 		if (!document.fileName.includes(file)) {
 			return;
@@ -146,7 +147,7 @@ function configToLsOptions(cfg: AppConfig): MlsConfig {
 		modules_folders,
 		dialect: cfg.network || 'libra',
 		stdlib_folder: cfg.stdlibPath,
-		sender_address:  cfg.sender,
+		sender_address: cfg.sender,
 	};
 }
 
@@ -160,42 +161,42 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 
 async function runScriptCommand(): Promise<any> {
 
-    // @ts-ignore
-    const document = vscode.window.activeTextEditor.document;
+	// @ts-ignore
+	const document = vscode.window.activeTextEditor.document;
 
-    if (!checkDocumentLanguage(document, 'move')) {
-        return vscode.window.showWarningMessage('Only .move scripts can be run');
-    }
+	if (!checkDocumentLanguage(document, 'move')) {
+		return vscode.window.showWarningMessage('Only .move scripts can be run');
+	}
 
-    const config = loadConfig(document);
-    let sender   = config.sender || '0x1'; // default sender in scripts is okay (I think)
+	const config = loadConfig(document);
+	let sender = config.sender || '0x1'; // default sender in scripts is okay (I think)
 
-    const workdir    = workspace.getWorkspaceFolder(document.uri);
-    const cfgBinPath = workspace.getConfiguration('move', document.uri).get<string>('moveExecutorPath');
-    const executable = (process.platform === 'win32') ? 'move-executor.exe' : 'move-executor';
+	const workdir = workspace.getWorkspaceFolder(document.uri);
+	const cfgBinPath = workspace.getConfiguration('move', document.uri).get<string>('moveExecutorPath');
+	const executable = (process.platform === 'win32') ? 'move-executor.exe' : 'move-executor';
 	const binaryPath = cfgBinPath || path.join(extensionPath, 'bin', executable);
 
-    const args = [
-        , document.uri.fsPath,
-        '--sender', sender,
-        '--dialect', config.network,
-    ];
+	const args = [
+		, document.uri.fsPath,
+		'--sender', sender,
+		'--dialect', config.network,
+	];
 
-    const modules = [config.modulesPath, config.stdlibPath].filter((a) => !!a);
+	const modules = [config.modulesPath, config.stdlibPath].filter((a) => !!a);
 
-    modules.forEach((m) => m && args.push('--modules', m));
+	modules.forEach((m) => m && args.push('--modules', m));
 
-    if (!workdir) {
-        return;
-    }
+	if (!workdir) {
+		return;
+	}
 
-    return vscode.tasks.executeTask(new vscode.Task(
-        {type: 'move', task: 'run'},
-        workdir,
-        'run',
-        'move',
-        new vscode.ShellExecution(binaryPath + args.join(' '))
-    ));
+	return vscode.tasks.executeTask(new vscode.Task(
+		{ type: 'move', task: 'run' },
+		workdir,
+		'run',
+		'move',
+		new vscode.ShellExecution(binaryPath + args.join(' '))
+	));
 }
 
 /**
@@ -215,21 +216,21 @@ async function compileCommand(): Promise<any> {
 	}
 
 	const config = loadConfig(document);
-	let sender   = config.sender || null;
+	let sender = config.sender || null;
 
 	// check if account has been preset
 	if (!sender) {
-		const prompt      = 'Enter account from which you\'re going to deploy this script (or set it in config)';
+		const prompt = 'Enter account from which you\'re going to deploy this script (or set it in config)';
 		const placeHolder = (config.network === 'libra') ? '0x...' : 'wallet1...';
 
 		await vscode.window
-			.showInputBox({prompt, placeHolder})
+			.showInputBox({ prompt, placeHolder })
 			.then((value) => (value) && (sender = value));
 	}
 
-	const workdir = workspace.getWorkspaceFolder(document.uri) || {uri: {fsPath: ''}};
-	const outdir  = path.join(workdir.uri.fsPath, config.compilerDir);
-	const text    = document.getText();
+	const workdir = workspace.getWorkspaceFolder(document.uri) || { uri: { fsPath: '' } };
+	const outdir = path.join(workdir.uri.fsPath, config.compilerDir);
+	const text = document.getText();
 
 	checkCreateOutDir(outdir);
 
@@ -239,15 +240,18 @@ async function compileCommand(): Promise<any> {
 
 	switch (config.network) {
 		case 'dfinance': return compileDfinance(sender, document, outdir, config);
-		case 'libra': 	 return compileLibra(sender, document, outdir, config);
+		case 'libra': return compileLibra(sender, document, outdir, config);
+		case 'starcoin': return compileLibra(sender, document, outdir, config);
 		default: vscode.window.showErrorMessage('Unknown Move network in config: only libra and dfinance supported');
 	}
 }
 
 function compileLibra(account: string, document: vscode.TextDocument, outdir: string, config: AppConfig) {
+	const cfgBinPath = workspace.getConfiguration('move', document.uri).get<string>('moveCompilerPath');
+	const executable = (process.platform === 'win32') ? 'move-build.exe' : 'move-build';
+	const bin = cfgBinPath || path.join(extensionPath, 'bin', executable);
 
-    const bin  = path.join(extensionPath, 'bin', 'move-build');
-    // @ts-ignore
+	// @ts-ignore
 	const mods = [config.stdlibPath, config.modulesPath].filter((a) => !!a).filter((a) => fs.existsSync(a));
 	const args = [
 		,
@@ -258,27 +262,27 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 	if (mods.length) {
 		args.push('--dependency');
 		args.push(...mods.map((mod) => mod + '/*'));
-    }
+	}
 
-    args.push('--', document.uri.fsPath);
+	args.push('--', document.uri.fsPath);
 
-    const workdir  = workspace.getWorkspaceFolder(document.uri);
+	const workdir = workspace.getWorkspaceFolder(document.uri);
 
-    if (!workdir) {
-        return;
-    }
+	if (!workdir) {
+		return;
+	}
 
 	return vscode.tasks.executeTask(new vscode.Task(
-        {type: 'move', task: 'compile'},
-        workdir,
-        'compile',
-        'move',
-        new vscode.ShellExecution(bin + args.join(' '))
-    ));
+		{ type: 'move', task: 'compile' },
+		workdir,
+		'compile',
+		'move',
+		new vscode.ShellExecution(bin + args.join(' '))
+	));
 }
 
 function compileDfinance(account: string, document: vscode.TextDocument, outdir: string, config: AppConfig) {
-  return vscode.window.showWarningMessage('Dfinance compiler temporarily turned off');
+	return vscode.window.showWarningMessage('Dfinance compiler temporarily turned off');
 }
 
 /**
@@ -292,8 +296,8 @@ function loadConfig(document: vscode.TextDocument): AppConfig {
 
 	// quick hack to make it extensible. church!
 	const globalCfg = workspace.getConfiguration('move', document.uri);
-	const workDir   = workspace.getWorkspaceFolder(document.uri);
-	const folder    = (workDir && workDir.uri.fsPath) || extensionPath;
+	const workDir = workspace.getWorkspaceFolder(document.uri);
+	const folder = (workDir && workDir.uri.fsPath) || extensionPath;
 	const localPath = path.join(folder, globalCfg.get('configPath') || '.mvconfig.json');
 
 	const cfg = {
@@ -340,14 +344,14 @@ function loadConfig(document: vscode.TextDocument): AppConfig {
 	}
 
 	return {
-		sender: 	 cfg.sender,
-		network: 	 cfg.network,
+		sender: cfg.sender,
+		network: cfg.network,
 		compilerDir: cfg.compilerDir,
 		// @ts-ignore
 		modulesPath: cfg.modulesPath,
 		// @ts-ignore
-		stdlibPath:  cfg.stdlibPath,
-		showModal:   cfg.showModal
+		stdlibPath: cfg.stdlibPath,
+		showModal: cfg.showModal
 	};
 }
 

@@ -1,0 +1,23 @@
+name: Release assets
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v2
+        - run: npm install
+        - run: npm run vscode:package -- -o move-ide.vsix
+        - name: Upload release asset
+          id: upload_release_asset
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ github.event.release.upload_url }}
+            asset_path: ./move-ide.vsix
+            asset_name: move-ide.vsix
+            asset_content_type: application/zip

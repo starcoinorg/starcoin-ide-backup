@@ -34,8 +34,8 @@ interface MlsConfig {
 export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => runScriptCommand(textEditor, edit).catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerCommand('move.deploy', () => deployModuleCommand().catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.deploy', (textEditor, edit) => executeMoveFileCommand(textEditor, edit).catch(console.error)));
 
 	extensionPath = context.extensionPath;
 	const outputChannel = vscode.window.createOutputChannel('move-language-server');
@@ -160,7 +160,7 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 	return true;
 }
 
-async function runScriptCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit) {
+async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit) {
 	let doc = textEditor.document;
 	if (!checkDocumentLanguage(doc, 'move')) {
 		return vscode.window.showWarningMessage('Can only run *.move file');
@@ -200,14 +200,21 @@ async function runScriptCommand(textEditor: vscode.TextEditor, _edit: vscode.Tex
 		'--sender', sender,
 	];
 
-	const mods: string[] = [config.modulesPath]
-		.filter((a) => !!a)
-		.filter((a) => fs.existsSync(a!))
-		.map((a) => a!);
-	if (mods.length > 0) {
-		args.push('--dep');
-		args.push(...mods);
+	let deps = [];
+	if (!!config.modulesPath && fs.existsSync(config.modulesPath)) {
+		let dirEntries = fs.readdirSync(config.modulesPath);
+		// exclude move file to run as dependencies
+		let modulePaths = dirEntries
+			.map(e => path.join(config.modulesPath!, e))
+			.filter((d) => d !== moveFilePath);
+		modulePaths.forEach(e => console.log(e));
+		deps.push(...modulePaths);
 	}
+	if (deps.length > 0) {
+		args.push('--dep');
+		args.push(...deps);
+	}
+
 	args.push('--');
 	args.push(moveFilePath);
 
@@ -221,13 +228,6 @@ async function runScriptCommand(textEditor: vscode.TextEditor, _edit: vscode.Tex
 	);
 
 	return vscode.tasks.executeTask(runTask);
-}
-
-/**
- * TODO: impl me.
- */
-async function deployModuleCommand() {
-
 }
 
 

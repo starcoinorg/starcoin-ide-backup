@@ -194,15 +194,6 @@
 			"darwin": "move-language-server-darwin"
 		}
 	},
-	"move-executor": {
-		"version": "v0.9.2-beta1",
-		"repository": "starcoinorg/move-tools",
-		"binaries": {
-			"win32": "move-executor-win32.exe",
-			"linux": "move-executor-linux",
-			"darwin": "move-executor-darwin"
-		}
-	},
 	"move-build": {
 		"version": "v0.9.2-beta1",
 		"repository": "starcoinorg/move-tools",

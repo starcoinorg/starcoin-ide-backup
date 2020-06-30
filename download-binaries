@@ -7,11 +7,11 @@
 
 'use strict';
 
-const fs    = require('fs');
-const path  = require('path');
+const fs = require('fs');
+const path = require('path');
 const https = require('https');
 
-['move-ls', 'move-build', 'move-executor'].map(function (binName) {
+['move-ls', 'move-build'].map(function (binName) {
 
     const cfg = require('./package.json')[binName];
     const bin = cfg.binaries[process.platform];
@@ -23,7 +23,7 @@ const https = require('https');
             let location = res.headers.location;
             https.get(location, (res) => {
                 console.log('Downloading file from %s', url);
-                res.pipe(fs.createWriteStream(path.resolve('bin/' + tgt), {mode: '755'}));
+                res.pipe(fs.createWriteStream(path.resolve('bin/' + tgt), { mode: '755' }));
             });
         });
     }

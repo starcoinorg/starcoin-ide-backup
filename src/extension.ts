@@ -34,8 +34,7 @@ interface MlsConfig {
 export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerCommand('move.run', () => runScriptCommand().catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.exec', (textEditor, edit) => execScriptCommand(textEditor, edit).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => runScriptCommand(textEditor, edit).catch(console.error)));
 	context.subscriptions.push(vscode.commands.registerCommand('move.deploy', () => deployModuleCommand().catch(console.error)));
 
 	extensionPath = context.extensionPath;
@@ -160,7 +159,8 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 
 	return true;
 }
-async function execScriptCommand(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
+
+async function runScriptCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit) {
 	let doc = textEditor.document;
 	if (!checkDocumentLanguage(doc, 'move')) {
 		return vscode.window.showWarningMessage('Can only run *.move file');
@@ -223,49 +223,13 @@ async function execScriptCommand(textEditor: vscode.TextEditor, edit: vscode.Tex
 	return vscode.tasks.executeTask(runTask);
 }
 
+/**
+ * TODO: impl me.
+ */
 async function deployModuleCommand() {
 
 }
 
-async function runScriptCommand(): Promise<any> {
-
-	// @ts-ignore
-	const document = vscode.window.activeTextEditor.document;
-
-	if (!checkDocumentLanguage(document, 'move')) {
-		return vscode.window.showWarningMessage('Only .move scripts can be run');
-	}
-
-	const config = loadConfig(document);
-	let sender = config.sender || '0x1'; // default sender in scripts is okay (I think)
-
-	const workdir = workspace.getWorkspaceFolder(document.uri);
-	const cfgBinPath = workspace.getConfiguration('move', document.uri).get<string>('moveExecutorPath');
-	const executable = (process.platform === 'win32') ? 'move-executor.exe' : 'move-executor';
-	const binaryPath = cfgBinPath || path.join(extensionPath, 'bin', executable);
-
-	const args = [
-		, document.uri.fsPath,
-		'--sender', sender,
-		'--dialect', config.network,
-	];
-
-	const modules = [config.modulesPath, config.stdlibPath].filter((a) => !!a);
-
-	modules.forEach((m) => m && args.push('--modules', m));
-
-	if (!workdir) {
-		return;
-	}
-
-	return vscode.tasks.executeTask(new vscode.Task(
-		{ type: 'move', task: 'run' },
-		workdir,
-		'run',
-		'move',
-		new vscode.ShellExecution(binaryPath + args.join(' '))
-	));
-}
 
 /**
  * Command: Move: Compile file

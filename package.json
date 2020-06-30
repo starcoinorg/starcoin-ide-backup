@@ -72,10 +72,6 @@
 				"title": "Move: Run Script"
 			},
 			{
-				"command": "move.exec",
-				"title": "Move: Exec Script"
-			},
-			{
 				"command": "move.deploy",
 				"title": "Move: Deploy Module"
 			}
@@ -88,10 +84,6 @@
 				},
 				{
 					"command": "move.run",
-					"when": "editorLangId == move"
-				},
-				{
-					"command": "move.exec",
 					"when": "editorLangId == move"
 				},
 				{
@@ -137,11 +129,6 @@
 					"type": "string",
 					"default": "",
 					"description": "Custom path to Move Language Server binary"
-				},
-				"move.moveExecutorPath": {
-					"type": "string",
-					"default": "",
-					"description": "Custom path to Move Executor binary"
 				},
 				"move.moveCompilerPath": {
 					"type": "string",

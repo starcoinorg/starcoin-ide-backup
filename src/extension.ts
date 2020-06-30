@@ -35,6 +35,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
 	context.subscriptions.push(vscode.commands.registerCommand('move.run', () => runScriptCommand().catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.exec', (textEditor, edit) => execScriptCommand(textEditor, edit).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerCommand('move.deploy', () => deployModuleCommand().catch(console.error)));
 
 	extensionPath = context.extensionPath;
 	const outputChannel = vscode.window.createOutputChannel('move-language-server');
@@ -158,6 +160,72 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 
 	return true;
 }
+async function execScriptCommand(textEditor: vscode.TextEditor, edit: vscode.TextEditorEdit) {
+	let doc = textEditor.document;
+	if (!checkDocumentLanguage(doc, 'move')) {
+		return vscode.window.showWarningMessage('Can only run *.move file');
+	}
+
+	let moveFilePath = doc.fileName;
+
+	let config = loadConfig(doc);
+	let workdir = vscode.workspace.getWorkspaceFolder(doc.uri)!;
+	let starcoinConfig = vscode.workspace.getConfiguration('starcoin', workdir);
+	let nodePath = starcoinConfig.get<string>('nodePath');
+	let nodeRpcUrl = starcoinConfig.get<string>('nodeRpcUrl');
+	if (!nodePath) {
+		vscode.window.showErrorMessage("starcoin nodePath is not configured");
+		return;
+	}
+	if (!nodeRpcUrl) {
+		vscode.window.showErrorMessage("starcoin node rpc url is not configured");
+		return;
+	}
+	let binaryPath = nodePath!;
+
+	let sender = config.sender || undefined;
+	if (!sender) {
+		const prompt = 'Enter account from which you\'re going to run this script (or set it in config)';
+		const placeHolder = '0x6142815e14be403fef8048b945cd4685';
+
+		await vscode.window
+			.showInputBox({ prompt, placeHolder })
+			.then((value) => (value) && (sender = value));
+	}
+
+	const args = [
+		'--connect', nodeRpcUrl,
+		'dev', 'execute',
+		'--blocking',
+		'--sender', sender,
+	];
+
+	const mods: string[] = [config.modulesPath]
+		.filter((a) => !!a)
+		.filter((a) => fs.existsSync(a!))
+		.map((a) => a!);
+	if (mods.length > 0) {
+		args.push('--dep');
+		args.push(...mods);
+	}
+	args.push('--');
+	args.push(moveFilePath);
+
+	args.unshift(binaryPath);
+	let runTask = new vscode.Task(
+		{ type: 'move', task: 'exec' },
+		workdir,
+		'exec',
+		'move',
+		new vscode.ShellExecution(args.join(' '))
+	);
+
+	return vscode.tasks.executeTask(runTask);
+}
+
+async function deployModuleCommand() {
+
+}
 
 async function runScriptCommand(): Promise<any> {
 
@@ -230,7 +298,6 @@ async function compileCommand(): Promise<any> {
 
 	const workdir = workspace.getWorkspaceFolder(document.uri) || { uri: { fsPath: '' } };
 	const outdir = path.join(workdir.uri.fsPath, config.compilerDir);
-	const text = document.getText();
 
 	checkCreateOutDir(outdir);
 
@@ -251,8 +318,10 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 	const executable = (process.platform === 'win32') ? 'move-build.exe' : 'move-build';
 	const bin = cfgBinPath || path.join(extensionPath, 'bin', executable);
 
-	// @ts-ignore
-	const mods = [config.stdlibPath, config.modulesPath].filter((a) => !!a).filter((a) => fs.existsSync(a));
+	const mods: string[] = [config.stdlibPath, config.modulesPath]
+		.filter((a) => !!a)
+		.filter((a) => fs.existsSync(a!))
+		.map((a) => a!);
 	const args = [
 		,
 		'--out-dir', outdir,
@@ -261,7 +330,7 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 
 	if (mods.length) {
 		args.push('--dependency');
-		args.push(...mods.map((mod) => mod + '/*'));
+		args.push(...mods);
 	}
 
 	args.push('--', document.uri.fsPath);
@@ -295,18 +364,18 @@ function compileDfinance(account: string, document: vscode.TextDocument, outdir:
 function loadConfig(document: vscode.TextDocument): AppConfig {
 
 	// quick hack to make it extensible. church!
-	const globalCfg = workspace.getConfiguration('move', document.uri);
+	const moveConfig = workspace.getConfiguration('move', document.uri);
 	const workDir = workspace.getWorkspaceFolder(document.uri);
 	const folder = (workDir && workDir.uri.fsPath) || extensionPath;
-	const localPath = path.join(folder, globalCfg.get('configPath') || '.mvconfig.json');
+	const localPath = path.join(folder, moveConfig.get('configPath') || '.mvconfig.json');
 
 	const cfg = {
-		sender: globalCfg.get<string>('account') || null,
-		network: globalCfg.get<string>('blockchain') || 'libra',
-		compilerDir: globalCfg.get<string>('compilerDir') || 'out',
-		modulesPath: globalCfg.get<string>('modulesPath') || 'modules',
-		stdlibPath: globalCfg.get<string>('stdlibPath') || undefined,
-		showModal: globalCfg.get<boolean>('showModal') || false
+		sender: moveConfig.get<string>('account') || null,
+		network: moveConfig.get<string>('blockchain') || 'libra',
+		compilerDir: moveConfig.get<string>('compilerDir') || 'out',
+		modulesPath: moveConfig.get<string>('modulesPath') || 'modules',
+		stdlibPath: moveConfig.get<string>('stdlibPath') || undefined,
+		showModal: moveConfig.get<boolean>('showModal') || false
 	};
 
 	// check if local config exists, then simply merge it right into cfg

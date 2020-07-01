@@ -1,6 +1,6 @@
 {
 	"name": "move-ide",
-	"version": "0.3.8-beta1",
+	"version": "0.3.8-beta2",
 	"description": "Move/mvir IDE for VSCode",
 	"publisher": "starcoinorg",
 	"displayName": "Move IDE",

@@ -1,6 +1,6 @@
 {
 	"name": "move-ide",
-	"version": "0.3.8-beta2",
+	"version": "0.3.8-beta3",
 	"description": "Move/mvir IDE for VSCode",
 	"publisher": "starcoinorg",
 	"displayName": "Move IDE",
@@ -72,6 +72,10 @@
 				"title": "Move: Run Script"
 			},
 			{
+				"command": "move.dry-run",
+				"title": "Move: Dry-Run Script"
+			},
+			{
 				"command": "move.deploy",
 				"title": "Move: Deploy Module"
 			}
@@ -84,6 +88,10 @@
 				},
 				{
 					"command": "move.run",
+					"when": "editorLangId == move"
+				},
+				{
+					"command": "move.dry-run",
 					"when": "editorLangId == move"
 				},
 				{
@@ -144,6 +152,11 @@
 					"type": "string",
 					"markdownDescription": "Url of Starcoin node rpc address",
 					"default": "ws://127.0.0.1:56818"
+				},
+				"starcoin.maxGasAmount": {
+					"type": "integer",
+					"markdownDescription": "Max gas amount used to run txn",
+					"default": "1000000"
 				}
 			}
 		}

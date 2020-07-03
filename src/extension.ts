@@ -34,8 +34,9 @@ interface MlsConfig {
 export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit).catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.deploy', (textEditor, edit) => executeMoveFileCommand(textEditor, edit).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.dry-run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, true).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, false).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.deploy', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, false).catch(console.error)));
 
 	extensionPath = context.extensionPath;
 	const outputChannel = vscode.window.createOutputChannel('move-language-server');
@@ -160,7 +161,7 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 	return true;
 }
 
-async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit) {
+async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit, dryRun: boolean) {
 	let doc = textEditor.document;
 	if (!checkDocumentLanguage(doc, 'move')) {
 		return vscode.window.showWarningMessage('Can only run *.move file');
@@ -173,6 +174,8 @@ async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vsco
 	let starcoinConfig = vscode.workspace.getConfiguration('starcoin', workdir);
 	let nodePath = starcoinConfig.get<string>('nodePath');
 	let nodeRpcUrl = starcoinConfig.get<string>('nodeRpcUrl');
+	let maxGasAmount = starcoinConfig.get('maxGasAmount', 1000000) || 1000000;
+
 	if (!nodePath) {
 		vscode.window.showErrorMessage("starcoin nodePath is not configured");
 		return;
@@ -193,12 +196,21 @@ async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vsco
 			.then((value) => (value) && (sender = value));
 	}
 
+	if (!sender) {
+		return;
+	}
+
 	const args = [
 		'--connect', nodeRpcUrl,
-		'dev', 'execute',
-		'--blocking',
-		'--sender', sender,
+		'-o', 'json',
+		'dev', 'execute', '--blocking',
 	];
+
+	if (dryRun) {
+		args.push('--dry-run');
+	}
+	args.push('--sender', sender);
+	args.push('--max-gas', maxGasAmount.toString());
 
 	let deps = [];
 	if (!!config.modulesPath && fs.existsSync(config.modulesPath)) {
@@ -282,22 +294,32 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 	const executable = (process.platform === 'win32') ? 'move-build.exe' : 'move-build';
 	const bin = cfgBinPath || path.join(extensionPath, 'bin', executable);
 
-	const mods: string[] = [config.stdlibPath, config.modulesPath]
-		.filter((a) => !!a)
-		.filter((a) => fs.existsSync(a!))
-		.map((a) => a!);
 	const args = [
 		,
 		'--out-dir', outdir,
 		'--sender', account
 	];
+	const moveFilePath = document.fileName;
+	const deps: string[] = [config.stdlibPath, config.modulesPath]
+		.filter((a) => !!a)
+		.map((a) => a!)
+		.filter((a) => fs.existsSync(a))
+		.map(depPath => {
+			let dirEntries = fs.readdirSync(depPath);
+			// exclude move file to run as dependencies
+			let modulePaths = dirEntries
+				.map(e => path.join(depPath!, e))
+				.filter((d) => d !== moveFilePath);
+			modulePaths.forEach(e => console.log(e));
+			return modulePaths;
+		}).flat();
 
-	if (mods.length) {
+	if (deps.length) {
 		args.push('--dependency');
-		args.push(...mods);
+		args.push(...deps);
 	}
 
-	args.push('--', document.uri.fsPath);
+	args.push('--', moveFilePath);
 
 	const workdir = workspace.getWorkspaceFolder(document.uri);
 

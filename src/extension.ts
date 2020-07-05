@@ -36,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('move.compile', () => compileCommand().catch(console.error)));
 	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.dry-run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, true).catch(console.error)));
 	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.run', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, false).catch(console.error)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.deploy', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, false).catch(console.error)));
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('move.deploy', (textEditor, edit) => executeMoveFileCommand(textEditor, edit, false, true).catch(console.error)));
 
 	extensionPath = context.extensionPath;
 	const outputChannel = vscode.window.createOutputChannel('move-language-server');
@@ -161,7 +161,12 @@ function checkDocumentLanguage(document: vscode.TextDocument, languageId: string
 	return true;
 }
 
-async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vscode.TextEditorEdit, dryRun: boolean) {
+async function executeMoveFileCommand(
+	textEditor: vscode.TextEditor,
+	_edit: vscode.TextEditorEdit,
+	dryRun: boolean,
+	isDeploy: boolean = false
+) {
 	let doc = textEditor.document;
 	if (!checkDocumentLanguage(doc, 'move')) {
 		return vscode.window.showWarningMessage('Can only run *.move file');
@@ -200,6 +205,27 @@ async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vsco
 		return;
 	}
 
+	let type_arguments: string[] = [];
+	let script_args: string[] = [];
+	if (!isDeploy) {
+		let prompt = "Entry script type arguments, seperate multile arguments with ',' (or leave it empty)";
+		let placeHolder = "0x01::STC::STC, 0x01::Coin::Coin";
+		let input_type_tags = await vscode.window
+			.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
+		if (input_type_tags) {
+			type_arguments.push(...input_type_tags.split(",").map(s => s.trim()));
+		}
+
+		prompt = "Entry script params, seperate multile params with ',' (or leave it empty)";
+		placeHolder = "0x6142815e14be403fef8048b945cd4685, 100000, b\"deadbeef\"";
+		let input_arguments = await vscode.window
+			.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
+		if (input_arguments) {
+			script_args.push(...input_arguments.split(",").map(s => s.trim()));
+		}
+	}
+
+
 	const args = [
 		'--connect', nodeRpcUrl,
 		'-o', 'json',
@@ -211,6 +237,14 @@ async function executeMoveFileCommand(textEditor: vscode.TextEditor, _edit: vsco
 	}
 	args.push('--sender', sender);
 	args.push('--max-gas', maxGasAmount.toString());
+	if (type_arguments.length > 0) {
+		args.push('-t');
+		args.push(...type_arguments);
+	}
+	if (script_args.length > 0) {
+		args.push('--arg');
+		args.push(...script_args);
+	}
 
 	let deps = [];
 	if (!!config.modulesPath && fs.existsSync(config.modulesPath)) {

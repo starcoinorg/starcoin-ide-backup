@@ -13,6 +13,7 @@
 		"postinstall": "./download-binaries",
 		"vscode:prepublish": "npm run compile",
 		"vscode:package": "npx vsce package",
+		"vscode:publish": "npx vsce publish",
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./"
 	},

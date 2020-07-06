@@ -1,10 +1,8 @@
 import * as fs from 'fs';
-import * as cp from 'child_process';
 import * as path from 'path';
 
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
-import { send } from 'process';
 
 let extensionPath: string;
 
@@ -16,8 +14,7 @@ interface AppConfig {
 	stdlibPath: string | null,
 	compilerDir: string,
 	network: string,
-	sender: string | undefined | null,
-	showModal: boolean
+	sender: string | undefined | null
 }
 
 interface MlsConfig {
@@ -281,7 +278,7 @@ async function executeMoveFileCommand(
  * Command: Move: Compile file
  * Logic:
  * - get active editor document, check if it's move
- * - check network (dfinance or libra)
+ * - check network
  * - run compillation
  */
 async function compileCommand(): Promise<any> {
@@ -299,7 +296,7 @@ async function compileCommand(): Promise<any> {
 	// check if account has been preset
 	if (!sender) {
 		const prompt = 'Enter account from which you\'re going to deploy this script (or set it in config)';
-		const placeHolder = (config.network === 'libra') ? '0x...' : 'wallet1...';
+		const placeHolder = '0x...';
 
 		await vscode.window
 			.showInputBox({ prompt, placeHolder })
@@ -316,7 +313,6 @@ async function compileCommand(): Promise<any> {
 	}
 
 	switch (config.network) {
-		case 'dfinance': return compileDfinance(sender, document, outdir, config);
 		case 'libra': return compileLibra(sender, document, outdir, config);
 		case 'starcoin': return compileLibra(sender, document, outdir, config);
 		default: vscode.window.showErrorMessage('Unknown Move network in config: only libra and dfinance supported');
@@ -370,9 +366,6 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 	));
 }
 
-function compileDfinance(account: string, document: vscode.TextDocument, outdir: string, config: AppConfig) {
-	return vscode.window.showWarningMessage('Dfinance compiler temporarily turned off');
-}
 
 /**
  * Try to load local config. If non existent - use VSCode settings for this
@@ -394,8 +387,7 @@ function loadConfig(document: vscode.TextDocument): AppConfig {
 		network: moveConfig.get<string>('blockchain') || 'libra',
 		compilerDir: moveConfig.get<string>('compilerDir') || 'out',
 		modulesPath: moveConfig.get<string>('modulesPath') || 'modules',
-		stdlibPath: moveConfig.get<string>('stdlibPath') || undefined,
-		showModal: moveConfig.get<boolean>('showModal') || false
+		stdlibPath: moveConfig.get<string>('stdlibPath') || undefined
 	};
 
 	// check if local config exists, then simply merge it right into cfg
@@ -439,8 +431,7 @@ function loadConfig(document: vscode.TextDocument): AppConfig {
 		// @ts-ignore
 		modulesPath: cfg.modulesPath,
 		// @ts-ignore
-		stdlibPath: cfg.stdlibPath,
-		showModal: cfg.showModal
+		stdlibPath: cfg.stdlibPath
 	};
 }
 
@@ -462,19 +453,3 @@ function checkCreateOutDir(outDir: string): void {
 	}
 }
 
-/**
- * Execute cli command, get Promise in return
- *
- * @param   {String}  cmd  Command to execute
- * @return  {Promise}      Promise with command result
- */
-function exec(cmd: string): Promise<string> {
-
-	console.log('Executing command:', cmd);
-
-	return new Promise((resolve, reject) => {
-		return cp.exec(cmd, function onExec(error, stdout, stderr) {
-			return (error !== null || stderr) ? reject(stderr || stdout) : resolve(stdout);
-		});
-	});
-}

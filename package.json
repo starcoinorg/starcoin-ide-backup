@@ -1,9 +1,9 @@
 {
-	"name": "move-ide",
-	"version": "0.3.8-beta3",
-	"description": "Move/mvir IDE for VSCode",
+	"name": "starcoin-ide",
+	"version": "0.4.0-alpha.1",
+	"description": "Starcoin Contract Development Environment for VSCode",
 	"publisher": "starcoinorg",
-	"displayName": "Move IDE",
+	"displayName": "Starcoin IDE",
 	"categories": [
 		"Programming Languages",
 		"Snippets",
@@ -20,7 +20,6 @@
 		"vscode": "^1.43.0"
 	},
 	"activationEvents": [
-		"onLanguage:mvir",
 		"onLanguage:move"
 	],
 	"main": "./dist/extension.js",
@@ -29,8 +28,7 @@
 			{
 				"id": "move",
 				"aliases": [
-					"Move",
-					"LibraMove"
+					"Move"
 				],
 				"extensions": [
 					".move"
@@ -101,7 +99,7 @@
 			]
 		},
 		"configuration": {
-			"title": "Move IDE",
+			"title": "Starcoin IDE",
 			"properties": {
 				"move.configPath": {
 					"type": "string",
@@ -114,7 +112,7 @@
 						"libra",
 						"starcoin"
 					],
-					"default": "libra",
+					"default": "starcoin",
 					"description": "Move compiler and dialect to use: Starcoin or Libra",
 					"scope": "resource"
 				},
@@ -128,11 +126,6 @@
 					"default": "",
 					"description": "Default account to use when compiling. If not set prompt will be shown on compile command"
 				},
-				"move.showModal": {
-					"type": "boolean",
-					"description": "Show notifications in modal window",
-					"default": true
-				},
 				"move.languageServerPath": {
 					"type": "string",
 					"default": "",
@@ -142,6 +135,15 @@
 					"type": "string",
 					"default": "",
 					"description": "Custom path to Move Compiler binary"
+				},
+				"move.stdlibPath": {
+					"type": "string",
+					"description": "Custom path of stdlib"
+				},
+				"move.modulesPath": {
+					"type": "string",
+					"default": "modules",
+					"description": "Path of modules"
 				},
 				"starcoin.nodePath": {
 					"type": "string",
@@ -174,11 +176,9 @@
 		"libra",
 		"move",
 		"ide",
-		"move ide",
-		"move-ide",
-		"libra-ide"
+		"starcoin"
 	],
-	"author": "Damir Shamanaev <damirka.ru@gmail.com>",
+	"author": "starcoinorg",
 	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/starcoinorg/vscode-move-ide/issues"
@@ -189,11 +189,6 @@
 		"@types/vscode": "^1.43.0",
 		"typescript": "^3.8.3",
 		"vsce": "^1.77.0"
-	},
-	"__metadata": {
-		"id": "7a08f3ad-eba4-44de-bca1-e41d38b68a5c",
-		"publisherDisplayName": "Damir Shamanaev",
-		"publisherId": "a21ee11b-2c64-42b1-a3d1-78e5ee8191a6"
 	},
 	"dependencies": {
 		"vscode-languageclient": "^6.1.3"

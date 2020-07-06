@@ -1,100 +1,45 @@
-# Move IDE for VSCode
+# Starcoin IDE for VSCode
 
-Built by developer for developers, this extension will simplify your Move development and will make your first experience with Move less painful.
-
-- [Jump to setup](#setup)
-- [Move Whitepaper](https://developers.libra.org/docs/move-paper)
-- [Marketplace](https://marketplace.visualstudio.com/items?itemName=damirka.move-ide)
-
-If you still aren't familiar with Move language you can see [Move Book](https://move-book.com).
-
-**What's inside**:
-
-- Move and Mvir syntax highlighting (always up to date) + spec support
-- [Move Language Server](https://github.com/dfinance/move-language-server) and syntax error check!
-- Move Executor - you can run your code in VSCode! Type `Move: Run Script`
-- `{{sender}}` pattern support for address in your modules and scripts
-- Built-in compiler Move (and Mvir) for Libra and Dfinance blockchains
-
-Already want to try? [To the marketplace!](https://marketplace.visualstudio.com/items?itemName=damirka.move-ide)
-
-## Syntax highlighting
-
-Extension features best syntax highlighting you can get for Move or Mvir. Each language has its own grammar file so you won't be mistaken and syntaxes won't overlap.
-
-I've personally put much effort into making this syntax helpful (aka some keywords - like `acquires` won't be highlighted when misplaced).
-
-### Samples:
-
-**Move** - brand new language now shines bright in your VSCode (the best with [Atom Light theme](https://marketplace.visualstudio.com/items?itemName=akamud.vscode-theme-onelight))
-
-![Move highlighting](https://raw.githubusercontent.com/damirka/vscode-move-ide/master/img/move.highlight.jpg)
-
-> Mvir is also supported, though it's support may end soon as Mvir is being removed from Libra
-
-<a name="setup"></a>
+A vscode plugin for [Starcoin](https://github.com/starcoinorg/starcoin) smart contract developers.
+It's modified from origin [damirka/vscode-move-ide](https://github.com/damirka/vscode-move-ide) to integrate with starcoin network.
 
 ## IDE Setup
 
-### Libra Compiler
+### VSCode workspace settings
 
-Libra compiler is supported on Darwin and Linux. Soon Win32 will be supported too.
-For Libra `move-build` is used, hence you can only compile Move files.
+```json
+{
+  "move.blockchain": "starcoin",
+  "move.account": "0xac6b029835949e6c0545b87b6d39db1d",
+  "move.stdlibPath": "./stdlib",
+  "move.modulesPath": "modules",
+  "starcoin.nodePath": "/usr/local/bin/starcoin",
+  "starcoin.nodeRpcUrl": "ws://127.0.0.1:60929",
+  "starcoin.maxGasAmount": 1000000
+}
+```
 
-### Dfinance
+**Comments:**
 
-Temporarily unsupported.
+- move.blockchain: `libra` or `starcoin` (starcoin is default).
+- move.account: account from which you're going to deploy/run scripts.
+- move.stdlibPath: stdlib path, default to stdlib under project dir.
+- move.modulePath: project path of move modules. Default to `modules` under project dir.
+- starcoin.nodePath: path of starcoin node binary.
+- starcoin.nodeRpcUrl: rpc address of starcoin netowrk.
+- starcoin.maxGasAmount: max gas used to deploy/run scripts.
+
 
 ## Recomended directory structure
 
-I highly recommend you using following directory structure:
+I recommend you using following directory structure:
 ```
 modules/       - here you'll put your modules (module.move)
 scripts/       - same here! scripts! (script.move)
 out/           - compiler output directory (module.mv or module.mv.json)
-
-.mvconfig.json - this file will help you keep setup within working directory (overrides vscode config)
 ```
-
-## Config file: .mvconfig.json
-
-Not to mess up configurations and keep it simple I suggest you using config file inside your working directory.
-Sample here (put inside your working dir):
-
-Configuration for Libra:
-
-```json
-{
-    "network": "libra",
-    "sender": "0x....",
-    "compilerDir": "out"
-}
-```
-
-Configuration file for dfinance:
-
-```json
-{
-    "network": "dfinance",
-    "sender": "wallet1...",
-    "compilerDir": "out"
-}
-```
-
-Compiler given here supports both Move and Mvir, though you'll need to know standard library you're accessing - [it's over here](https://github.com/dfinance/dvm/tree/master/lang/stdlib).
-
-**Comments:**
-
-- network: `libra` or `dfinance` (libra is default);
-- sender: account from which you're going to deploy/run scripts;
-- compilerDir: compiler output directory;
-
-**Additional configuration options:**
-
-- stdlibPath - custom path to stdlib folder - either relative to workspace or absolute or null;
-- modulesPath - custom path to modules folder (instead of default modules) - relative or absolute or null;
 
 ## Contribution
 
-Feel free to ask any questions or report bugs [by opening new issue](https://github.com/damirka/vscode-move-ide/issues).
+Feel free to ask any questions or report bugs [by opening new issue](https://github.com/starcoinorg/vscode-move-ide/issues).
 

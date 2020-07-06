@@ -1,6 +1,8 @@
 # Change Log
 
-Version history from v0.2.0 to this day.
+## v0.4.0
+
+Inital release of Starcoin IDE.
 
 ## v0.3.6 - bytestring literal support
 

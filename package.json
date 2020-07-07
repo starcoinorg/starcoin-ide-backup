@@ -146,6 +146,11 @@
 					"default": "modules",
 					"description": "Path of modules"
 				},
+				"move.scriptArgConfigPath": {
+					"type": "string",
+					"default": "inputs",
+					"description": "Arguments config path for running scripts, should be a relative path to project dir"
+				},
 				"starcoin.nodePath": {
 					"type": "string",
 					"markdownDescription": "Path of Starcoin node binary",

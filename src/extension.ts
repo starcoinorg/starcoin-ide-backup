@@ -203,23 +203,32 @@ async function executeMoveFileCommand(
 	}
 
 	let type_arguments: string[] = [];
-	let script_args: string[] = [];
+	let scriptArgs: string[] = [];
 	if (!isDeploy) {
-		let prompt = "Entry script type arguments, seperate multile arguments with ',' (or leave it empty)";
-		let placeHolder = "0x01::STC::STC, 0x01::Coin::Coin";
-		let input_type_tags = await vscode.window
-			.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
-		if (input_type_tags) {
-			type_arguments.push(...input_type_tags.split(",").map(s => s.trim()));
+		const scriptName = path.parse(moveFilePath).name;
+		let configFromPath = loadScriptArgConfigFromPath(config.compilerDir, scriptName);
+		if (configFromPath) {
+			type_arguments.push(...configFromPath.type_arguments);
+			scriptArgs.push(...configFromPath.arguments);
+		} else { // read from user input
+
+			let prompt = "Entry script type arguments, seperate multile arguments with ',' (or leave it empty)";
+			let placeHolder = "0x01::STC::STC, 0x01::Coin::Coin";
+			let input_type_tags = await vscode.window
+				.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
+			if (input_type_tags) {
+				type_arguments.push(...input_type_tags.split(",").map(s => s.trim()));
+			}
+
+			prompt = "Entry script params, seperate multile params with ',' (or leave it empty)";
+			placeHolder = "0x6142815e14be403fef8048b945cd4685, 100000, b\"deadbeef\"";
+			let input_arguments = await vscode.window
+				.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
+			if (input_arguments) {
+				scriptArgs.push(...input_arguments.split(",").map(s => s.trim()));
+			}
 		}
 
-		prompt = "Entry script params, seperate multile params with ',' (or leave it empty)";
-		placeHolder = "0x6142815e14be403fef8048b945cd4685, 100000, b\"deadbeef\"";
-		let input_arguments = await vscode.window
-			.showInputBox({ prompt, placeHolder, ignoreFocusOut: true });
-		if (input_arguments) {
-			script_args.push(...input_arguments.split(",").map(s => s.trim()));
-		}
 	}
 
 
@@ -238,9 +247,9 @@ async function executeMoveFileCommand(
 		args.push('-t');
 		args.push(...type_arguments);
 	}
-	if (script_args.length > 0) {
+	if (scriptArgs.length > 0) {
 		args.push('--arg');
-		args.push(...script_args);
+		args.push(...scriptArgs);
 	}
 
 	let deps = [];
@@ -367,6 +376,24 @@ function compileLibra(account: string, document: vscode.TextDocument, outdir: st
 }
 
 
+interface ScriptArgs {
+	type_arguments: string[],
+	arguments: string[],
+}
+
+function loadScriptArgConfigFromPath(argConfigPath: string, script_name: string): ScriptArgs | undefined {
+	const scriptConfigPath = path.join(argConfigPath, script_name + '.json');
+	if (fs.existsSync(scriptConfigPath)) {
+		let data = JSON.parse(fs.readFileSync(scriptConfigPath).toString());
+		return {
+			type_arguments: data['type_arguments'] || [],
+			arguments: data['arguments'] || [],
+		};
+	} else {
+		return undefined;
+	}
+}
+
 /**
  * Try to load local config. If non existent - use VSCode settings for this
  * extension.
@@ -387,6 +414,7 @@ function loadConfig(document: vscode.TextDocument): AppConfig {
 		network: moveConfig.get<string>('blockchain') || 'libra',
 		compilerDir: moveConfig.get<string>('compilerDir') || 'out',
 		modulesPath: moveConfig.get<string>('modulesPath') || 'modules',
+		scriptArgConfigPath: moveConfig.get<string>('scriptArgConfigPath') || undefined,
 		stdlibPath: moveConfig.get<string>('stdlibPath') || undefined
 	};
 

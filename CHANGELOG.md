@@ -1,5 +1,11 @@
 # Change Log
 
+## v0.4.1
+
+New features:
+
+- Support providing script running arguments from config file.
+
 ## v0.4.0
 
 Inital release of Starcoin IDE.

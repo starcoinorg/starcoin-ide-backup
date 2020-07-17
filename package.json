@@ -119,7 +119,7 @@
 				},
 				"move.compilerDir": {
 					"type": "string",
-					"default": "./out",
+					"default": "target",
 					"description": "Relative path inside working directory to put compiled files into"
 				},
 				"move.account": {

@@ -93,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	// subscribe to .mvconfig.json changes
-	vscode.workspace.onDidSaveTextDocument(function onDidSaveConfiguration(document: vscode.TextDocument) {
+	workspace.onDidSaveTextDocument(function onDidSaveConfiguration(document: vscode.TextDocument) {
 
 		if (!checkDocumentLanguage(document, 'json')) {
 			return;
@@ -121,7 +121,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 
 		const finConfig = loadConfig(document);
-
 		client.sendNotification('workspace/didChangeConfiguration', { settings: "" });
 		client.onRequest('workspace/configuration', () => configToLsOptions(finConfig));
 	});
@@ -239,7 +238,7 @@ async function executeMoveFileCommand(
 	];
 
 	if (dryRun) {
-		args.push('--dry-run');
+		args.push('--dry-run', '--local');
 	}
 	args.push('--sender', sender);
 	args.push('--max-gas', maxGasAmount.toString());

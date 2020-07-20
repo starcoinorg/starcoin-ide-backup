@@ -102,6 +102,22 @@
 		"configuration": {
 			"title": "Starcoin IDE",
 			"properties": {
+				"move.trace.server": {
+					"type": "string",
+					"scope": "window",
+					"enum": [
+						"off",
+						"messages",
+						"verbose"
+					],
+					"enumDescriptions": [
+						"No traces",
+						"Error only",
+						"Full log"
+					],
+					"default": "off",
+					"description": "Trace requests to the move-ls (this is usually overly verbose and not recommended for regular users)"
+				},
 				"move.configPath": {
 					"type": "string",
 					"default": ".mvconfig.json",

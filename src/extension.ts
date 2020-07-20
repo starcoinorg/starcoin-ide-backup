@@ -68,12 +68,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		const config = loadConfig(document);
 		const clientOptions: lsp.LanguageClientOptions = {
 			outputChannel,
+			traceOutputChannel: vscode.window.createOutputChannel("Move Language Server Trace"),
 			workspaceFolder: folder,
 			documentSelector: [{ scheme: 'file', language: 'move', pattern: folder.uri.fsPath + '/**/*' }],
 			initializationOptions: configToLsOptions(config)
 		};
 
-		const client = new lsp.LanguageClient('move-language-server', 'Move Language Server', serverOptions, clientOptions);
+		const client = new lsp.LanguageClient('move', 'Move Language Server', serverOptions, clientOptions);
 
 		client.start();
 

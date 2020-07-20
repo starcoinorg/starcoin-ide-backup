@@ -1,3 +1,14 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [0.4.2](https://github.com/starcoinorg/vscode-move-ide/compare/v0.4.1...v0.4.2) (2020-07-20)
+
+
+### Features
+
+* upgrade language server ([70b76a6](https://github.com/starcoinorg/vscode-move-ide/commit/70b76a62226c245ad93eb1e534e273964fb54e24))
+
 # Change Log
 
 ## v0.4.1
